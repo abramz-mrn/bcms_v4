@@ -1,0 +1,170 @@
+services:
+  nginx:
+    image: nginx:1.28-alpine
+    container_name: bcms_nginx
+    depends_on:
+      - web
+      - api
+    ports:
+      - "80:80"
+    volumes:
+      - ./infra/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - bcms_net
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: bcms_web
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1/api
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+    command: sh -lc "npm install && npm run dev"
+    ports:
+      - "3000:3000"
+    networks:
+      - bcms_net
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: bcms_api
+    depends_on:
+      - db
+      - redis
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_URL=http://127.0.0.1
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=bcms
+      - DB_USERNAME=bcms
+      - DB_PASSWORD=bcms
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - QUEUE_CONNECTION=redis
+      - CACHE_STORE=redis
+      - SESSION_DRIVER=redis
+      - SANCTUM_STATEFUL_DOMAINS=127.0.0.1,localhost
+    volumes:
+      - ./apps/api:/var/www/html
+    ports:
+      - "8000:8000"
+    networks:
+      - bcms_net
+
+  worker:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: bcms_worker
+    depends_on:
+      - api
+      - redis
+      - db
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=bcms
+      - DB_USERNAME=bcms
+      - DB_PASSWORD=bcms
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - QUEUE_CONNECTION=redis
+    volumes:
+      - ./apps/api:/var/www/html
+    command: bash -lc "php artisan queue:work --sleep=1 --tries=3 --timeout=120"
+    networks:
+      - bcms_net
+
+  scheduler:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: bcms_scheduler
+    depends_on:
+      - api
+      - db
+      - redis
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=bcms
+      - DB_USERNAME=bcms
+      - DB_PASSWORD=bcms
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./apps/api:/var/www/html
+    command: bash -lc "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
+    networks:
+      - bcms_net
+
+  horizon:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: bcms_horizon
+    depends_on:
+      - api
+      - redis
+      - db
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=bcms
+      - DB_USERNAME=bcms
+      - DB_PASSWORD=bcms
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - QUEUE_CONNECTION=redis
+    volumes:
+      - ./apps/api:/var/www/html
+    command: bash -lc "php artisan horizon"
+    networks:
+      - bcms_net
+
+  db:
+    image: postgres:16-alpine
+    container_name: bcms_db
+    environment:
+      - POSTGRES_DB=bcms
+      - POSTGRES_USER=bcms
+      - POSTGRES_PASSWORD=bcms
+    ports:
+      - "5432:5432"
+    volumes:
+      - bcms_pgdata:/var/lib/postgresql/data
+    networks:
+      - bcms_net
+
+  redis:
+    image: redis:7-alpine
+    container_name: bcms_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - bcms_net
+
+volumes:
+  bcms_pgdata:
+
+networks:
+  bcms_net:
+    driver: bridge
