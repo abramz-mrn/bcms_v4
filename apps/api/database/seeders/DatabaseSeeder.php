@@ -8,22 +8,10 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // ...seeder lain yang sudah ada...
+
         $this->call([
-            CompanySeeder::class,
-            UserGroupSeeder::class,
-            UserSeeder::class,
-            BrandSeeder::class,
-            ProductSeeder::class,
-            RouterSeeder::class,
-            InternetServiceSeeder::class,
-            CustomerSeeder::class,
-            SubscriptionSeeder::class,
-            ProvisioningSeeder::class,
-            InvoiceSeeder::class,
-            PaymentSeeder::class,
-            TemplateSeeder::class,
-            ReminderSeeder::class,
-            TicketSeeder::class,
+            MessageTemplateSeeder::class,
         ]);
     }
 }

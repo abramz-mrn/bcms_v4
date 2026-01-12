@@ -13,4 +13,9 @@ class Customer extends Model
         'code','name','id_card_number','address','city','state','pos','group_area',
         'phone','email','document_id_card','notes','created_by'
     ];
+
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class, 'customers_id');
+    }
 }

@@ -1,0 +1,3 @@
+<?php
+// ...
+$schedule->command('bcms:send-invoice-reminders --channel=email')->dailyAt('08:00');

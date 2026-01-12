@@ -1,0 +1,3 @@
+<?php
+// ...
+'web_url' => env('WEB_URL', null),

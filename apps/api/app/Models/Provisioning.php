@@ -18,4 +18,9 @@ class Provisioning extends Model
     protected $casts = [
         'activation_date' => 'date',
     ];
+
+    public function router()
+    {
+        return $this->belongsTo(Router::class, 'routers_id');
+    }
 }

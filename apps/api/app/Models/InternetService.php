@@ -19,5 +19,17 @@ class InternetService extends Model
     protected $casts = [
         'start_date' => 'date',
         'due_date' => 'date',
+        'auto_soft_limit' => 'integer',
+        'auto_suspend' => 'integer',
     ];
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'products_id');
+    }
+
+    public function router()
+    {
+        return $this->belongsTo(Router::class, 'routers_id');
+    }
 }

@@ -1,6 +1,10 @@
 export default async function Health() {
   const base = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1/api";
-  const res = await fetch(`${base}/v1/auth/me`, { cache: "no-store" });
+  const res = await fetch(`${base}/v1/auth/me`, {
+    cache: "no-store",
+    credentials: "include"
+  });
+
   return (
     <main className="max-w-2xl mx-auto p-8">
       <h1 className="text-xl font-semibold">Health</h1>

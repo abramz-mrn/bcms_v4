@@ -2,36 +2,43 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
     public function login(Request $request)
     {
-        $data = $request->validate([
+        $credentials = $request->validate([
             'email' => ['required','email'],
             'password' => ['required','string'],
         ]);
 
-        /** @var User|null $user */
-        $user = User::query()->where('email', $data['email'])->first();
-
-        if (!$user || !Hash::check($data['password'], $user->password)) {
-            throw ValidationException::withMessages(['email' => 'Invalid credentials.']);
+        if (!Auth::attempt($credentials)) {
+            return response()->json(['message' => 'Invalid credentials.'], 422);
         }
 
-        if ($user->locked !== 'active') {
-            return response()->json(['message' => 'User is not active.'], 403);
-        }
+        $request->session()->regenerate();
 
-        // Token-based for starter. For SPA-cookie, configure Sanctum stateful + CSRF.
-        $token = $user->createToken('admin')->plainTextToken;
+        $user = $request->user();
+
+        AuditLog::query()->create([
+            'users_id' => $user->id,
+            'users_name' => $user->name,
+            'ip_address' => $request->ip(),
+            'action' => 'login',
+            'resource_type' => 'auth',
+            'old_value' => null,
+            'new_value' => [
+                'status' => 200,
+                'email' => $user->email,
+            ],
+            'description' => 'User login',
+        ]);
 
         return response()->json([
-            'token' => $token,
+            'message' => 'Logged in',
             'user' => $user->load('group','company'),
         ]);
     }
@@ -45,7 +52,26 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()?->delete();
+        $user = $request->user();
+
+        AuditLog::query()->create([
+            'users_id' => $user?->id,
+            'users_name' => $user?->name,
+            'ip_address' => $request->ip(),
+            'action' => 'logout',
+            'resource_type' => 'auth',
+            'old_value' => null,
+            'new_value' => [
+                'status' => 200,
+            ],
+            'description' => 'User logout',
+        ]);
+
+        Auth::guard('web')->logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
         return response()->json(['message' => 'Logged out']);
     }
 }
