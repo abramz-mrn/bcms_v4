@@ -7,7 +7,7 @@
     "laravel/sanctum": "^4.2",
     "laravel/horizon": "^5.42",
     "laravel/octane": "^2.13",
-    "spiral/roadrunner": "^2.0",
+    "spiral/roadrunner": "^2025.1.6",
     "nyholm/psr7": "^1.8"
   },
   "require-dev": {
@@ -25,5 +25,10 @@
     ]
   },
   "minimum-stability": "stable",
-  "prefer-stable": true
+  "prefer-stable": true,
+  "config": {
+    "audit": {
+      "block-insecure": false
+    }
+  }
 }

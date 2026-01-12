@@ -4,7 +4,7 @@ WORKDIR /var/www/html
 
 RUN apk add --no-cache \
     bash git curl unzip icu-dev libzip-dev oniguruma-dev postgresql-dev \
-    && docker-php-ext-install intl zip pdo_pgsql
+    && docker-php-ext-install intl zip pdo_pgsql opcache pcntl
 
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
