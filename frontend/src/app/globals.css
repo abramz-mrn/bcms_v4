@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --sidebar: #111827; /* slate-900 */
+}
+
+a { text-decoration: none; }
